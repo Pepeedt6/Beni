@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Planificación de Turnos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #ecf0f1;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+
+        .stats-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stats-card.success {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--success-color);
+        }
+
+        .stats-card.warning {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning-color);
+        }
+
+        .stats-card.danger {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger-color);
+        }
+
+        .planning-table {
+            font-size: 0.9rem;
+        }
+
+        .planning-table th {
+            background-color: var(--primary-color);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        .turno-manana {
+            background-color: #fff3cd;
+        }
+
+        .turno-tarde {
+            background-color: #cfe2ff;
+        }
+
+        .turno-noche {
+            background-color: #d1ecf1;
+        }
+
+        .sin-asignar {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .tab-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .nav-tabs .nav-link.active {
+            background-color: white;
+            border-color: #dee2e6 #dee2e6 white;
+        }
+
+        #loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+
+        .alert-float {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-calendar3"></i> Sistema de Planificación de Turnos
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <button class="btn btn-outline-light btn-sm me-2" onclick="guardarEstado()">
+                            <i class="bi bi-save"></i> Guardar
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-outline-light btn-sm" onclick="cargarEstado()">
+                            <i class="bi bi-folder-open"></i> Cargar
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Loading spinner -->
+    <div id="loading">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+
+    <!-- Alert container -->
+    <div id="alertContainer"></div>
+
+    <!-- Main content -->
+    <div class="container-fluid mt-4">
+        <!-- Stats Row -->
+        <div class="row mb-4" id="statsRow" style="display: none;">
+            <div class="col-md-3">
+                <div class="stats-card success">
+                    <h3 id="statCobertura">0%</h3>
+                    <p class="mb-0">Cobertura Total</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card warning">
+                    <h3 id="statTurnos">0</h3>
+                    <p class="mb-0">Total Turnos</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card danger">
+                    <h3 id="statSinCubrir">0</h3>
+                    <p class="mb-0">Turnos Sin Cubrir</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card success">
+                    <h3 id="statEmpleados">0</h3>
+                    <p class="mb-0">Empleados Activos</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="card">
+            <div class="card-header p-0">
+                <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="planning-tab" data-bs-toggle="tab" data-bs-target="#planning" type="button">
+                            <i class="bi bi-calendar-week"></i> Planning
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados" type="button">
+                            <i class="bi bi-people"></i> Empleados
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ausencias-tab" data-bs-toggle="tab" data-bs-target="#ausencias" type="button">
+                            <i class="bi bi-calendar-x"></i> Ausencias
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="intercambios-tab" data-bs-toggle="tab" data-bs-target="#intercambios" type="button">
+                            <i class="bi bi-arrow-left-right"></i> Intercambios
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="estadisticas-tab" data-bs-toggle="tab" data-bs-target="#estadisticas" type="button">
+                            <i class="bi bi-graph-up"></i> Estadísticas
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="mainTabContent">
+                    <!-- Planning Tab -->
+                    <div class="tab-pane fade show active" id="planning" role="tabpanel">
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <h4>Generar Planning Semanal</h4>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-success btn-sm" onclick="exportarCSV()">
+                                    <i class="bi bi-download"></i> Exportar CSV
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Fecha Inicio</label>
+                                <input type="date" class="form-control" id="fechaInicio">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Fecha Fin</label>
+                                <input type="date" class="form-control" id="fechaFin">
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button class="btn btn-primary w-100" onclick="generarPlanning()">
+                                    <i class="bi bi-calendar-plus"></i> Generar Planning
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="planningContent"></div>
+                    </div>
+
+                    <!-- Empleados Tab -->
+                    <div class="tab-pane fade" id="empleados" role="tabpanel">
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <h4>Gestión de Empleados</h4>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addEmpleadoModal">
+                                    <i class="bi bi-person-plus"></i> Agregar Empleado
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="empleadosTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>Rol</th>
+                                        <th>Antigüedad (meses)</th>
+                                        <th>Horas Min/Max</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Ausencias Tab -->
+                    <div class="tab-pane fade" id="ausencias" role="tabpanel">
+                        <h4 class="mb-4">Registrar Ausencia</h4>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <form id="ausenciaForm">
+                                            <div class="mb-3">
+                                                <label class="form-label">Empleado</label>
+                                                <select class="form-select" id="ausenciaEmpleado" required>
+                                                    <option value="">Seleccione un empleado</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Fecha</label>
+                                                <input type="date" class="form-control" id="ausenciaFecha" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Motivo</label>
+                                                <select class="form-select" id="ausenciaMotivo" required>
+                                                    <option value="">Seleccione un motivo</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-check-circle"></i> Registrar Ausencia
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="sustitutosContent"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intercambios Tab -->
+                    <div class="tab-pane fade" id="intercambios" role="tabpanel">
+                        <h4 class="mb-4">Solicitar Intercambio de Turno</h4>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <form id="intercambioForm">
+                                            <div class="mb-3">
+                                                <label class="form-label">Empleado Origen</label>
+                                                <select class="form-select" id="intercambioOrigen" required>
+                                                    <option value="">Seleccione empleado</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Empleado Destino</label>
+                                                <select class="form-select" id="intercambioDestino" required>
+                                                    <option value="">Seleccione empleado</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Fecha</label>
+                                                <input type="date" class="form-control" id="intercambioFecha" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-arrow-left-right"></i> Solicitar Intercambio
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estadísticas Tab -->
+                    <div class="tab-pane fade" id="estadisticas" role="tabpanel">
+                        <h4 class="mb-4">Estadísticas del Planning</h4>
+                        <div id="estadisticasContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Empleado -->
+    <div class="modal fade" id="addEmpleadoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Nuevo Empleado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addEmpleadoForm">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nuevoNombre" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rol</label>
+                            <select class="form-select" id="nuevoRol" required>
+                                <option value="">Seleccione un rol</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Antigüedad (meses)</label>
+                            <input type="number" class="form-control" id="nuevoAntiguedad" min="0" value="0">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Horas Mínimas</label>
+                                    <input type="number" class="form-control" id="nuevoHorasMin" min="0" value="20">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Horas Máximas</label>
+                                    <input type="number" class="form-control" id="nuevoHorasMax" min="0" value="40">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="agregarEmpleado()">Agregar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Variables globales
+        let empleadosList = [];
+        let planningData = null;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            // Establecer fechas por defecto
+            const hoy = new Date();
+            const lunes = new Date(hoy);
+            lunes.setDate(hoy.getDate() - hoy.getDay() + 1);
+            const domingo = new Date(lunes);
+            domingo.setDate(lunes.getDate() + 6);
+            
+            document.getElementById('fechaInicio').value = lunes.toISOString().split('T')[0];
+            document.getElementById('fechaFin').value = domingo.toISOString().split('T')[0];
+            
+            // Cargar datos iniciales
+            cargarEmpleados();
+            cargarRoles();
+            cargarTiposTurno();
+            cargarMotivosAusencia();
+            
+            // Event listeners
+            document.getElementById('ausenciaForm').addEventListener('submit', registrarAusencia);
+            document.getElementById('intercambioForm').addEventListener('submit', solicitarIntercambio);
+            document.getElementById('addEmpleadoForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                agregarEmpleado();
+            });
+        });
+
+        // Funciones de API
+        async function apiCall(url, options = {}) {
+            showLoading();
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error en la operación');
+                }
+                
+                return data;
+            } catch (error) {
+                showAlert('danger', error.message);
+                throw error;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Funciones de UI
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show alert-float`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.getElementById('alertContainer').appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Funciones de Planning
+        async function generarPlanning() {
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+            
+            if (!fechaInicio || !fechaFin) {
+                showAlert('warning', 'Por favor seleccione las fechas');
+                return;
+            }
+            
+            try {
+                const data = await apiCall('/api/generar_planning', {
+                    method: 'POST',
+                    body: JSON.stringify({ fecha_inicio: fechaInicio, fecha_fin: fechaFin })
+                });
+                
+                planningData = data;
+                mostrarPlanning();
+                actualizarEstadisticas();
+                showAlert('success', 'Planning generado correctamente');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function mostrarPlanning() {
+            try {
+                const data = await apiCall('/api/mostrar_planning');
+                
+                if (data.datos) {
+                    renderPlanningTable(data.datos);
+                    document.getElementById('statsRow').style.display = 'flex';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function renderPlanningTable(data) {
+            const content = document.getElementById('planningContent');
+            let html = '<div class="table-responsive"><table class="table table-bordered planning-table"><thead><tr><th>Fecha</th>';
+            
+            // Obtener todos los tipos de turno únicos
+            const tiposTurno = new Set();
+            Object.values(data.planning).forEach(dia => {
+                dia.forEach(turno => tiposTurno.add(turno.tipo));
+            });
+            
+            tiposTurno.forEach(tipo => {
+                html += `<th>${tipo}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            // Renderizar filas
+            Object.entries(data.planning).forEach(([fecha, turnos]) => {
+                const fechaObj = new Date(fecha);
+                const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                html += `<tr><td><strong>${diasSemana[fechaObj.getDay()]} ${fecha}</strong></td>`;
+                
+                tiposTurno.forEach(tipo => {
+                    const turnosTipo = turnos.filter(t => t.tipo === tipo);
+                    html += '<td>';
+                    turnosTipo.forEach(turno => {
+                        const clase = turno.empleado === 'Sin asignar' ? 'sin-asignar' : '';
+                        html += `<div class="${clase}">${turno.empleado} (${turno.rol})</div>`;
+                    });
+                    html += '</td>';
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            
+            // Resumen
+            html += '<div class="mt-4"><h5>Resumen de Horas por Empleado</h5><div class="row">';
+            Object.entries(data.resumen.horas_por_empleado).forEach(([empleado, horas]) => {
+                html += `<div class="col-md-3 mb-2"><strong>${empleado}:</strong> ${horas}h</div>`;
+            });
+            html += '</div></div>';
+            
+            content.innerHTML = html;
+        }
+
+        // Funciones de Empleados
+        async function cargarEmpleados() {
+            try {
+                empleadosList = await apiCall('/api/empleados');
+                renderEmpleadosTable();
+                updateEmpleadosSelects();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function renderEmpleadosTable() {
+            const tbody = document.querySelector('#empleadosTable tbody');
+            tbody.innerHTML = empleadosList.map(emp => `
+                <tr>
+                    <td>${emp.id}</td>
+                    <td>${emp.nombre}</td>
+                    <td>${emp.rol}</td>
+                    <td>${emp.antiguedad_meses}</td>
+                    <td>${emp.horas_min}h - ${emp.horas_max}h</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editarPreferencias(${emp.id})">
+                            <i class="bi bi-gear"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateEmpleadosSelects() {
+            const selects = ['ausenciaEmpleado', 'intercambioOrigen', 'intercambioDestino'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    select.innerHTML = '<option value="">Seleccione un empleado</option>' +
+                        empleadosList.map(emp => `<option value="${emp.nombre}">${emp.nombre} - ${emp.rol}</option>`).join('');
+                }
+            });
+        }
+
+        async function agregarEmpleado() {
+            const nombre = document.getElementById('nuevoNombre').value;
+            const rol = document.getElementById('nuevoRol').value;
+            const antiguedad = parseInt(document.getElementById('nuevoAntiguedad').value) || 0;
+            const horasMin = parseInt(document.getElementById('nuevoHorasMin').value) || 20;
+            const horasMax = parseInt(document.getElementById('nuevoHorasMax').value) || 40;
+            
+            if (!nombre || !rol) {
+                showAlert('warning', 'Complete todos los campos requeridos');
+                return;
+            }
+            
+            try {
+                const data = await apiCall('/api/agregar_empleado', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        nombre: nombre,
+                        rol: rol,
+                        antiguedad_meses: antiguedad,
+                        horas_min: horasMin,
+                        horas_max: horasMax
+                    })
+                });
+                
+                showAlert('success', data.mensaje);
+                document.getElementById('addEmpleadoForm').reset();
+                bootstrap.Modal.getInstance(document.getElementById('addEmpleadoModal')).hide();
+                cargarEmpleados();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Funciones de Ausencias
+        async function registrarAusencia(e) {
+            e.preventDefault();
+            
+            const nombre = document.getElementById('ausenciaEmpleado').value;
+            const fecha = document.getElementById('ausenciaFecha').value;
+            const motivo = document.getElementById('ausenciaMotivo').value;
+            
+            try {
+                const data = await apiCall('/api/registrar_ausencia', {
+                    method: 'POST',
+                    body: JSON.stringify({ nombre, fecha, motivo })
+                });
+                
+                showAlert('success', data.mensaje);
+                
+                if (data.sustitutos_sugeridos && data.sustitutos_sugeridos.length > 0) {
+                    mostrarSustitutos(data.sustitutos_sugeridos);
+                }
+                
+                document.getElementById('ausenciaForm').reset();
+                mostrarPlanning();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function mostrarSustitutos(sustitutos) {
+            const content = document.getElementById('sustitutosContent');
+            let html = '<div class="card"><div class="card-header"><h5>Sustitutos Sugeridos</h5></div><div class="card-body">';
+            
+            sustitutos.forEach(sug => {
+                html += `<h6>Turno ${sug.turno}:</h6><ul class="list-group mb-3">`;
+                sug.candidatos.forEach(cand => {
+                    html += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${cand.nombre}</strong> (${cand.rol})
+                                <br><small>Horas semana: ${cand.horas_semana_actual}h | Antigüedad: ${cand.antiguedad_meses} meses</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">${cand.puntuacion}</span>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+            });
+            
+            html += '</div></div>';
+            content.innerHTML = html;
+        }
+
+        // Funciones de Intercambios
+        async function solicitarIntercambio(e) {
+            e.preventDefault();
+            
+            const origen = document.getElementById('intercambioOrigen').value;
+            const destino = document.getElementById('intercambioDestino').value;
+            const fecha = document.getElementById('intercambioFecha').value;
+            
+            try {
+                const data = await apiCall('/api/solicitar_intercambio', {
+                    method: 'POST',
+                    body: JSON.stringify({ origen, destino, fecha })
+                });
+                
+                showAlert('success', data.mensaje);
+                document.getElementById('intercambioForm').reset();
+                mostrarPlanning();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Funciones de Estadísticas
+        async function actualizarEstadisticas() {
+            try {
+                const stats = await apiCall('/api/ver_estadisticas');
+                
+                // Actualizar cards
+                document.getElementById('statCobertura').textContent = stats.resumen_general.porcentaje_cobertura + '%';
+                document.getElementById('statTurnos').textContent = stats.resumen_general.total_turnos;
+                document.getElementById('statSinCubrir').textContent = stats.resumen_general.turnos_sin_cubrir;
+                document.getElementById('statEmpleados').textContent = empleadosList.length;
+                
+                // Mostrar estadísticas detalladas
+                renderEstadisticas(stats);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function renderEstadisticas(stats) {
+            const content = document.getElementById('estadisticasContent');
+            let html = '<div class="row">';
+            
+            // Cobertura por rol
+            html += '<div class="col-md-6"><div class="card mb-4"><div class="card-header"><h5>Cobertura por Rol</h5></div><div class="card-body">';
+            Object.entries(stats.cobertura_por_rol).forEach(([rol, datos]) => {
+                const porcentaje = datos.porcentaje_cobertura;
+                const color = porcentaje >= 80 ? 'success' : porcentaje >= 60 ? 'warning' : 'danger';
+                html += `
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>${rol}</span>
+                            <span>${datos.cubiertos}/${datos.requeridos}</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-${color}" style="width: ${porcentaje}%">${porcentaje}%</div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div></div></div>';
+            
+            // Distribución de horas
+            html += '<div class="col-md-6"><div class="card mb-4"><div class="card-header"><h5>Distribución de Horas</h5></div><div class="card-body">';
+            if (stats.equidad) {
+                html += `
+                    <p><strong>Promedio:</strong> ${stats.equidad.horas_promedio}h</p>
+                    <p><strong>Mínimo:</strong> ${stats.equidad.horas_minimas}h</p>
+                    <p><strong>Máximo:</strong> ${stats.equidad.horas_maximas}h</p>
+                    <p><strong>Coeficiente de variación:</strong> ${stats.equidad.coeficiente_variacion}%</p>
+                `;
+            }
+            html += '</div></div></div>';
+            
+            // Alertas
+            if (stats.alertas && stats.alertas.length > 0) {
+                html += '<div class="col-12"><div class="alert alert-warning"><h5>Alertas Detectadas</h5><ul class="mb-0">';
+                stats.alertas.forEach(alerta => {
+                    html += `<li>${alerta}</li>`;
+                });
+                html += '</ul></div></div>';
+            }
+            
+            html += '</div>';
+            content.innerHTML = html;
+        }
+
+        // Funciones de carga de datos
+        async function cargarRoles() {
+            try {
+                const roles = await apiCall('/api/roles');
+                const select = document.getElementById('nuevoRol');
+                select.innerHTML = '<option value="">Seleccione un rol</option>' +
+                    roles.map(rol => `<option value="${rol.valor}">${rol.nombre}</option>`).join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function cargarTiposTurno() {
+            try {
+                const tipos = await apiCall('/api/tipos_turno');
+                // Usar para futuros formularios
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function cargarMotivosAusencia() {
+            try {
+                const motivos = await apiCall('/api/motivos_ausencia');
+                const select = document.getElementById('ausenciaMotivo');
+                select.innerHTML = '<option value="">Seleccione un motivo</option>' +
+                    motivos.map(motivo => `<option value="${motivo.valor}">${motivo.nombre}</option>`).join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Funciones de exportación y guardado
+        async function exportarCSV() {
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+            
+            if (!fechaInicio || !fechaFin) {
+                showAlert('warning', 'Genere un planning primero');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/exportar_csv', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ fecha_inicio: fechaInicio, fecha_fin: fechaFin })
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `planning_${fechaInicio}_${fechaFin}.csv`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    showAlert('success', 'Planning exportado correctamente');
+                }
+            } catch (error) {
+                showAlert('danger', 'Error al exportar el planning');
+            }
+        }
+
+        async function guardarEstado() {
+            try {
+                const data = await apiCall('/api/guardar_estado', {
+                    method: 'POST'
+                });
+                showAlert('success', data.mensaje);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function cargarEstado() {
+            try {
+                const data = await apiCall('/api/cargar_estado', {
+                    method: 'POST'
+                });
+                showAlert('success', data.mensaje);
+                cargarEmpleados();
+                mostrarPlanning();
+                actualizarEstadisticas();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function editarPreferencias(empleadoId) {
+            // TODO: Implementar modal de edición de preferencias
+            showAlert('info', 'Función en desarrollo');
+        }
+    </script>
+</body>
+</html>
