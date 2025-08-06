@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Gestión de Turnos{% endblock %}
+
+{% block content %}
+<!-- Welcome Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="card-title">
+                            <i class="fas fa-user me-2"></i>
+                            Bienvenido, {{ current_user.name }}
+                        </h2>
+                        <p class="card-text mb-0">
+                            Sistema de gestión de turnos - Accede a todas las funcionalidades desde aquí
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <i class="fas fa-calendar-alt fa-4x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3">
+            <i class="fas fa-bolt me-2"></i>
+            Acciones Rápidas
+        </h4>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-plus fa-2x text-primary mb-3"></i>
+                <h6 class="card-title">Generar Planning</h6>
+                <p class="card-text small">Crear nuevo planning semanal</p>
+                <button class="btn btn-primary btn-sm" onclick="showGeneratePlanningModal()">
+                    <i class="fas fa-plus me-1"></i>Generar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-check fa-2x text-success mb-3"></i>
+                <h6 class="card-title">Ver Planning</h6>
+                <p class="card-text small">Consultar turnos actuales</p>
+                <button class="btn btn-success btn-sm" onclick="showPlanningModal()">
+                    <i class="fas fa-eye me-1"></i>Ver
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-user-times fa-2x text-warning mb-3"></i>
+                <h6 class="card-title">Registrar Ausencia</h6>
+                <p class="card-text small">Marcar ausencia y buscar reemplazo</p>
+                <button class="btn btn-warning btn-sm" onclick="showAbsenceModal()">
+                    <i class="fas fa-plus me-1"></i>Registrar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-exchange-alt fa-2x text-info mb-3"></i>
+                <h6 class="card-title">Intercambiar Turno</h6>
+                <p class="card-text small">Solicitar intercambio con otro empleado</p>
+                <button class="btn btn-info btn-sm" onclick="showExchangeModal()">
+                    <i class="fas fa-exchange me-1"></i>Intercambiar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3">
+            <i class="fas fa-chart-bar me-2"></i>
+            Estadísticas Generales
+        </h4>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-muted">Total Turnos</h6>
+                        <h3 class="mb-0" id="totalShifts">-</h3>
+                    </div>
+                    <div class="text-primary">
+                        <i class="fas fa-calendar fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-muted">Asignados</h6>
+                        <h3 class="mb-0 text-success" id="assignedShifts">-</h3>
+                    </div>
+                    <div class="text-success">
+                        <i class="fas fa-user-check fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-muted">Disponibles</h6>
+                        <h3 class="mb-0 text-warning" id="availableShifts">-</h3>
+                    </div>
+                    <div class="text-warning">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title text-muted">Empleados</h6>
+                        <h3 class="mb-0 text-info" id="totalEmployees">-</h3>
+                    </div>
+                    <div class="text-info">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-8 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Actividad Reciente
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="recentActivity">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                        <p>Cargando actividad reciente...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-tools me-2"></i>
+                    Herramientas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="showStatisticsModal()">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Ver Estadísticas Detalladas
+                    </button>
+                    <button class="btn btn-outline-success" onclick="exportCSV()">
+                        <i class="fas fa-file-csv me-2"></i>
+                        Exportar CSV
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="exportPDF()">
+                        <i class="fas fa-file-pdf me-2"></i>
+                        Exportar PDF
+                    </button>
+                    <button class="btn btn-outline-info" onclick="showPreferencesModal()">
+                        <i class="fas fa-cog me-2"></i>
+                        Mis Preferencias
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+{% include 'modals/generate_planning.html' %}
+{% include 'modals/planning_view.html' %}
+{% include 'modals/absence_form.html' %}
+{% include 'modals/exchange_form.html' %}
+{% include 'modals/statistics.html' %}
+{% include 'modals/preferences.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load dashboard data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadStatistics();
+    loadRecentActivity();
+});
+
+function loadStatistics() {
+    fetch('/api/ver_estadisticas')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('totalShifts').textContent = data.stats.total_shifts;
+                document.getElementById('assignedShifts').textContent = data.stats.assigned_shifts;
+                document.getElementById('availableShifts').textContent = data.stats.available_shifts;
+                document.getElementById('totalEmployees').textContent = data.stats.total_employees;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading statistics:', error);
+        });
+}
+
+function loadRecentActivity() {
+    // Simulate loading recent activity
+    setTimeout(() => {
+        document.getElementById('recentActivity').innerHTML = `
+            <div class="activity-item d-flex align-items-center mb-3">
+                <div class="activity-icon bg-primary text-white rounded-circle p-2 me-3">
+                    <i class="fas fa-calendar-plus"></i>
+                </div>
+                <div>
+                    <strong>Planning generado</strong>
+                    <br>
+                    <small class="text-muted">Hace 2 horas</small>
+                </div>
+            </div>
+            <div class="activity-item d-flex align-items-center mb-3">
+                <div class="activity-icon bg-success text-white rounded-circle p-2 me-3">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div>
+                    <strong>Turno asignado a Juan Pérez</strong>
+                    <br>
+                    <small class="text-muted">Hace 3 horas</small>
+                </div>
+            </div>
+            <div class="activity-item d-flex align-items-center mb-3">
+                <div class="activity-icon bg-warning text-white rounded-circle p-2 me-3">
+                    <i class="fas fa-user-times"></i>
+                </div>
+                <div>
+                    <strong>Ausencia registrada</strong>
+                    <br>
+                    <small class="text-muted">Hace 5 horas</small>
+                </div>
+            </div>
+        `;
+    }, 1000);
+}
+
+function exportCSV() {
+    window.location.href = '/api/exportar_csv';
+}
+
+function exportPDF() {
+    window.location.href = '/api/exportar_pdf';
+}
+</script>
+{% endblock %}

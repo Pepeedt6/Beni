@@ -1,0 +1,226 @@
+<!-- Preferences Modal -->
+<div class="modal fade" id="preferencesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cog me-2"></i>
+                    Mis Preferencias
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="preferencesForm">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-user me-2"></i>Empleado
+                        </label>
+                        <select class="form-select" id="prefEmployee" required>
+                            <option value="">Selecciona tu nombre</option>
+                            <option value="Juan Pérez">Juan Pérez</option>
+                            <option value="María García">María García</option>
+                            <option value="Carlos López">Carlos López</option>
+                            <option value="Ana Martínez">Ana Martínez</option>
+                            <option value="Luis Rodríguez">Luis Rodríguez</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-clock me-2"></i>Turnos Preferidos
+                        </label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="prefMorning" value="morning">
+                            <label class="form-check-label" for="prefMorning">
+                                <i class="fas fa-sun me-1"></i>Turno de Mañana (08:00-16:00)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="prefAfternoon" value="afternoon">
+                            <label class="form-check-label" for="prefAfternoon">
+                                <i class="fas fa-cloud-sun me-1"></i>Turno de Tarde (16:00-00:00)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="prefNight" value="night">
+                            <label class="form-check-label" for="prefNight">
+                                <i class="fas fa-moon me-1"></i>Turno de Noche (00:00-08:00)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-week me-2"></i>Días Preferidos
+                        </label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="prefMonday" value="monday">
+                                    <label class="form-check-label" for="prefMonday">Lunes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="prefTuesday" value="tuesday">
+                                    <label class="form-check-label" for="prefTuesday">Martes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="prefWednesday" value="wednesday">
+                                    <label class="form-check-label" for="prefWednesday">Miércoles</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="prefThursday" value="thursday">
+                                    <label class="form-check-label" for="prefThursday">Jueves</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="prefFriday" value="friday">
+                                    <label class="form-check-label" for="prefFriday">Viernes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="prefSaturday" value="saturday">
+                                    <label class="form-check-label" for="prefSaturday">Sábado</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="prefSunday" value="sunday">
+                                    <label class="form-check-label" for="prefSunday">Domingo</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="prefMaxHours" class="form-label">
+                            <i class="fas fa-hourglass-half me-2"></i>Horas Máximas Semanales
+                        </label>
+                        <select class="form-select" id="prefMaxHours">
+                            <option value="32">32 horas</option>
+                            <option value="35">35 horas</option>
+                            <option value="40" selected>40 horas (estándar)</option>
+                            <option value="44">44 horas</option>
+                            <option value="48">48 horas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="prefRestDays" class="form-label">
+                            <i class="fas fa-bed me-2"></i>Días de Descanso Preferidos
+                        </label>
+                        <select class="form-select" id="prefRestDays" multiple>
+                            <option value="monday">Lunes</option>
+                            <option value="tuesday">Martes</option>
+                            <option value="wednesday">Miércoles</option>
+                            <option value="thursday">Jueves</option>
+                            <option value="friday">Viernes</option>
+                            <option value="saturday">Sábado</option>
+                            <option value="sunday">Domingo</option>
+                        </select>
+                        <div class="form-text">Mantén presionado Ctrl (Cmd en Mac) para seleccionar múltiples días</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="prefNotes" class="form-label">
+                            <i class="fas fa-sticky-note me-2"></i>Notas Adicionales
+                        </label>
+                        <textarea class="form-control" id="prefNotes" rows="3" placeholder="Información adicional sobre tus preferencias (opcional)"></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Información:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Las preferencias se considerarán al generar el planning</li>
+                            <li>No garantizan la asignación de turnos específicos</li>
+                            <li>Se respetarán las normativas laborales</li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="savePreferences()">
+                    <i class="fas fa-save me-2"></i>
+                    Guardar Preferencias
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showPreferencesModal() {
+    new bootstrap.Modal(document.getElementById('preferencesModal')).show();
+    loadCurrentPreferences();
+}
+
+function loadCurrentPreferences() {
+    // Set current user as default if available
+    const currentUser = '{{ current_user.name }}';
+    if (currentUser && currentUser !== 'None') {
+        document.getElementById('prefEmployee').value = currentUser;
+    }
+}
+
+function savePreferences() {
+    const employee = document.getElementById('prefEmployee').value;
+    
+    if (!employee) {
+        showAlert('danger', 'Por favor, selecciona tu nombre');
+        return;
+    }
+    
+    // Collect preferences
+    const preferences = {
+        shifts: {
+            morning: document.getElementById('prefMorning').checked,
+            afternoon: document.getElementById('prefAfternoon').checked,
+            night: document.getElementById('prefNight').checked
+        },
+        days: {
+            monday: document.getElementById('prefMonday').checked,
+            tuesday: document.getElementById('prefTuesday').checked,
+            wednesday: document.getElementById('prefWednesday').checked,
+            thursday: document.getElementById('prefThursday').checked,
+            friday: document.getElementById('prefFriday').checked,
+            saturday: document.getElementById('prefSaturday').checked,
+            sunday: document.getElementById('prefSunday').checked
+        },
+        maxHours: document.getElementById('prefMaxHours').value,
+        restDays: Array.from(document.getElementById('prefRestDays').selectedOptions).map(option => option.value),
+        notes: document.getElementById('prefNotes').value
+    };
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+    button.disabled = true;
+    
+    fetch('/api/registrar_preferencia', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            nombre: employee,
+            datos: preferences
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'Preferencias guardadas exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('preferencesModal')).hide();
+        } else {
+            showAlert('danger', 'Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'Error al guardar preferencias');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+</script>

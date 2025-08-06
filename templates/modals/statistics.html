@@ -1,0 +1,301 @@
+<!-- Statistics Modal -->
+<div class="modal fade" id="statisticsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Estadísticas Detalladas
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Summary Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                                <h4 id="statsTotalEmployees">-</h4>
+                                <p class="text-muted mb-0">Total Empleados</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-calendar fa-2x text-success mb-2"></i>
+                                <h4 id="statsTotalShifts">-</h4>
+                                <p class="text-muted mb-0">Total Turnos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-user-check fa-2x text-info mb-2"></i>
+                                <h4 id="statsAssignedShifts">-</h4>
+                                <p class="text-muted mb-0">Asignados</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                                <h4 id="statsAvailableShifts">-</h4>
+                                <p class="text-muted mb-0">Disponibles</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Employee Statistics -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-user-chart me-2"></i>
+                                    Estadísticas por Empleado
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Empleado</th>
+                                                <th>Antigüedad</th>
+                                                <th>Turnos</th>
+                                                <th>Horas</th>
+                                                <th>Promedio</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="employeeStatsTable">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted py-4">
+                                                    <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                                                    <p>Cargando estadísticas...</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Distribución de Carga
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="loadDistribution">
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                                        <p>Cargando distribución...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card border-0 shadow-sm mt-3">
+                            <div class="card-header bg-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-balance-scale me-2"></i>
+                                    Métricas de Equidad
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="equityMetrics">
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                                        <p>Cargando métricas...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" onclick="exportStatisticsCSV()">
+                    <i class="fas fa-file-csv me-2"></i>Exportar CSV
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showStatisticsModal() {
+    new bootstrap.Modal(document.getElementById('statisticsModal')).show();
+    loadDetailedStatistics();
+}
+
+function loadDetailedStatistics() {
+    fetch('/api/ver_estadisticas')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayStatistics(data.stats);
+            } else {
+                showAlert('danger', 'Error al cargar estadísticas');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading statistics:', error);
+            showAlert('danger', 'Error al cargar estadísticas');
+        });
+}
+
+function displayStatistics(stats) {
+    // Update summary cards
+    document.getElementById('statsTotalEmployees').textContent = stats.total_employees;
+    document.getElementById('statsTotalShifts').textContent = stats.total_shifts;
+    document.getElementById('statsAssignedShifts').textContent = stats.assigned_shifts;
+    document.getElementById('statsAvailableShifts').textContent = stats.available_shifts;
+    
+    // Display employee statistics
+    displayEmployeeStats(stats.employee_stats);
+    
+    // Display load distribution
+    displayLoadDistribution(stats.employee_stats);
+    
+    // Display equity metrics
+    displayEquityMetrics(stats.employee_stats);
+}
+
+function displayEmployeeStats(employeeStats) {
+    const tbody = document.getElementById('employeeStatsTable');
+    
+    if (employeeStats.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                    <i class="fas fa-user-times fa-2x mb-3"></i>
+                    <p>No hay datos de empleados</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = employeeStats.map(emp => {
+        const avgHours = emp.shifts_count > 0 ? (emp.total_hours / emp.shifts_count).toFixed(1) : '0';
+        const seniorityClass = emp.seniority >= 5 ? 'text-success' : emp.seniority >= 3 ? 'text-warning' : 'text-muted';
+        
+        return `
+            <tr>
+                <td>
+                    <strong>${emp.name}</strong>
+                    <br>
+                    <small class="text-muted">${emp.seniority} años</small>
+                </td>
+                <td>
+                    <span class="badge ${seniorityClass}">
+                        <i class="fas fa-star me-1"></i>${emp.seniority}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge bg-primary">${emp.shifts_count}</span>
+                </td>
+                <td>
+                    <strong>${emp.total_hours}h</strong>
+                </td>
+                <td>
+                    <small class="text-muted">${avgHours}h/turno</small>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function displayLoadDistribution(employeeStats) {
+    const container = document.getElementById('loadDistribution');
+    
+    if (employeeStats.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No hay datos disponibles</p>';
+        return;
+    }
+    
+    // Calculate distribution
+    const totalShifts = employeeStats.reduce((sum, emp) => sum + emp.shifts_count, 0);
+    const distribution = employeeStats.map(emp => ({
+        name: emp.name,
+        percentage: totalShifts > 0 ? ((emp.shifts_count / totalShifts) * 100).toFixed(1) : 0
+    }));
+    
+    container.innerHTML = distribution.map(item => `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <strong>${item.name}</strong>
+                <br>
+                <small class="text-muted">${item.percentage}%</small>
+            </div>
+            <div class="progress flex-grow-1 mx-2" style="height: 8px;">
+                <div class="progress-bar" role="progressbar" style="width: ${item.percentage}%"></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function displayEquityMetrics(employeeStats) {
+    const container = document.getElementById('equityMetrics');
+    
+    if (employeeStats.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No hay datos disponibles</p>';
+        return;
+    }
+    
+    // Calculate equity metrics
+    const shifts = employeeStats.map(emp => emp.shifts_count);
+    const hours = employeeStats.map(emp => emp.total_hours);
+    
+    const avgShifts = shifts.reduce((sum, val) => sum + val, 0) / shifts.length;
+    const avgHours = hours.reduce((sum, val) => sum + val, 0) / hours.length;
+    
+    const maxShifts = Math.max(...shifts);
+    const minShifts = Math.min(...shifts);
+    const maxHours = Math.max(...hours);
+    const minHours = Math.min(...hours);
+    
+    const equityScore = ((minShifts / maxShifts) * 100).toFixed(1);
+    const hoursEquity = ((minHours / maxHours) * 100).toFixed(1);
+    
+    container.innerHTML = `
+        <div class="row text-center">
+            <div class="col-6">
+                <h5 class="text-primary">${equityScore}%</h5>
+                <small class="text-muted">Equidad Turnos</small>
+            </div>
+            <div class="col-6">
+                <h5 class="text-success">${hoursEquity}%</h5>
+                <small class="text-muted">Equidad Horas</small>
+            </div>
+        </div>
+        <hr>
+        <div class="row text-center">
+            <div class="col-6">
+                <h6 class="text-info">${avgShifts.toFixed(1)}</h6>
+                <small class="text-muted">Promedio Turnos</small>
+            </div>
+            <div class="col-6">
+                <h6 class="text-warning">${avgHours.toFixed(1)}h</h6>
+                <small class="text-muted">Promedio Horas</small>
+            </div>
+        </div>
+    `;
+}
+
+function exportStatisticsCSV() {
+    // Implementation for exporting statistics to CSV
+    showAlert('info', 'Funcionalidad de exportación de estadísticas en desarrollo');
+}
+</script>
