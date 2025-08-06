@@ -1,0 +1,212 @@
+<!-- Planning View Modal -->
+<div class="modal fade" id="planningModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar me-2"></i>
+                    Planning Semanal
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Filters -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="employeeFilter" class="form-label">
+                            <i class="fas fa-user me-2"></i>Filtrar por Empleado
+                        </label>
+                        <select class="form-select" id="employeeFilter" onchange="filterPlanning()">
+                            <option value="">Todos los empleados</option>
+                            <option value="Juan Pérez">Juan Pérez</option>
+                            <option value="María García">María García</option>
+                            <option value="Carlos López">Carlos López</option>
+                            <option value="Ana Martínez">Ana Martínez</option>
+                            <option value="Luis Rodríguez">Luis Rodríguez</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="statusFilter" class="form-label">
+                            <i class="fas fa-filter me-2"></i>Filtrar por Estado
+                        </label>
+                        <select class="form-select" id="statusFilter" onchange="filterPlanning()">
+                            <option value="">Todos los estados</option>
+                            <option value="assigned">Asignado</option>
+                            <option value="available">Disponible</option>
+                            <option value="absent">Ausente</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Planning Table -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="planningTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th><i class="fas fa-calendar-day me-1"></i>Fecha</th>
+                                <th><i class="fas fa-clock me-1"></i>Hora Inicio</th>
+                                <th><i class="fas fa-clock me-1"></i>Hora Fin</th>
+                                <th><i class="fas fa-user-tie me-1"></i>Rol</th>
+                                <th><i class="fas fa-user me-1"></i>Empleado</th>
+                                <th><i class="fas fa-info-circle me-1"></i>Estado</th>
+                                <th><i class="fas fa-cogs me-1"></i>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="planningTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                                    <p>Cargando planning...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" onclick="exportPlanningCSV()">
+                    <i class="fas fa-file-csv me-2"></i>Exportar CSV
+                </button>
+                <button type="button" class="btn btn-danger" onclick="exportPlanningPDF()">
+                    <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showPlanningModal() {
+    new bootstrap.Modal(document.getElementById('planningModal')).show();
+    loadPlanning();
+}
+
+function loadPlanning() {
+    const employeeFilter = document.getElementById('employeeFilter').value;
+    const url = employeeFilter ? `/api/mostrar_planning?nombre=${encodeURIComponent(employeeFilter)}` : '/api/mostrar_planning';
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayPlanning(data.shifts);
+            } else {
+                showAlert('danger', 'Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading planning:', error);
+            showAlert('danger', 'Error al cargar planning');
+        });
+}
+
+function displayPlanning(shifts) {
+    const tbody = document.getElementById('planningTableBody');
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    if (shifts.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                    <i class="fas fa-calendar-times fa-2x mb-3"></i>
+                    <p>No hay turnos disponibles</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let filteredShifts = shifts;
+    if (statusFilter) {
+        filteredShifts = shifts.filter(shift => shift.status === statusFilter);
+    }
+    
+    tbody.innerHTML = filteredShifts.map(shift => {
+        const statusClass = getStatusClass(shift.status);
+        const statusIcon = getStatusIcon(shift.status);
+        
+        return `
+            <tr>
+                <td>${formatDate(shift.date)}</td>
+                <td>${shift.start_time}</td>
+                <td>${shift.end_time}</td>
+                <td>${shift.role}</td>
+                <td>${shift.employee}</td>
+                <td>
+                    <span class="badge ${statusClass}">
+                        <i class="${statusIcon} me-1"></i>${getStatusText(shift.status)}
+                    </span>
+                </td>
+                <td>
+                    ${shift.status === 'available' ? `
+                        <button class="btn btn-sm btn-primary" onclick="assignShift(${shift.id})" title="Asignar turno">
+                            <i class="fas fa-user-plus"></i>
+                        </button>
+                    ` : ''}
+                    ${shift.status === 'assigned' ? `
+                        <button class="btn btn-sm btn-warning" onclick="modifyShift(${shift.id})" title="Modificar turno">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ` : ''}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function filterPlanning() {
+    loadPlanning();
+}
+
+function getStatusClass(status) {
+    switch (status) {
+        case 'assigned': return 'bg-success';
+        case 'available': return 'bg-warning';
+        case 'absent': return 'bg-danger';
+        default: return 'bg-secondary';
+    }
+}
+
+function getStatusIcon(status) {
+    switch (status) {
+        case 'assigned': return 'fas fa-user-check';
+        case 'available': return 'fas fa-clock';
+        case 'absent': return 'fas fa-user-times';
+        default: return 'fas fa-question';
+    }
+}
+
+function getStatusText(status) {
+    switch (status) {
+        case 'assigned': return 'Asignado';
+        case 'available': return 'Disponible';
+        case 'absent': return 'Ausente';
+        default: return 'Desconocido';
+    }
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('es-ES', options);
+}
+
+function assignShift(shiftId) {
+    // Implementation for assigning a shift
+    showAlert('info', 'Funcionalidad de asignación en desarrollo');
+}
+
+function modifyShift(shiftId) {
+    // Implementation for modifying a shift
+    showAlert('info', 'Funcionalidad de modificación en desarrollo');
+}
+
+function exportPlanningCSV() {
+    window.location.href = '/api/exportar_csv';
+}
+
+function exportPlanningPDF() {
+    window.location.href = '/api/exportar_pdf';
+}
+</script>

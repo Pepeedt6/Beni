@@ -1,0 +1,221 @@
+<!-- Exchange Form Modal -->
+<div class="modal fade" id="exchangeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exchange-alt me-2"></i>
+                    Solicitar Intercambio de Turno
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="exchangeForm">
+                    <div class="mb-3">
+                        <label for="exchangeOrigin" class="form-label">
+                            <i class="fas fa-user me-2"></i>Empleado Origen
+                        </label>
+                        <select class="form-select" id="exchangeOrigin" required onchange="loadEmployeeShifts('origin')">
+                            <option value="">Selecciona el empleado que solicita</option>
+                            <option value="Juan Pérez">Juan Pérez</option>
+                            <option value="María García">María García</option>
+                            <option value="Carlos López">Carlos López</option>
+                            <option value="Ana Martínez">Ana Martínez</option>
+                            <option value="Luis Rodríguez">Luis Rodríguez</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="exchangeTarget" class="form-label">
+                            <i class="fas fa-user me-2"></i>Empleado Destino
+                        </label>
+                        <select class="form-select" id="exchangeTarget" required onchange="loadEmployeeShifts('target')">
+                            <option value="">Selecciona el empleado con quien intercambiar</option>
+                            <option value="Juan Pérez">Juan Pérez</option>
+                            <option value="María García">María García</option>
+                            <option value="Carlos López">Carlos López</option>
+                            <option value="Ana Martínez">Ana Martínez</option>
+                            <option value="Luis Rodríguez">Luis Rodríguez</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="exchangeDate" class="form-label">
+                            <i class="fas fa-calendar-day me-2"></i>Fecha del Intercambio
+                        </label>
+                        <input type="date" class="form-control" id="exchangeDate" required onchange="loadEmployeeShifts()">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-check me-2"></i>Turno Origen
+                                </label>
+                                <div id="originShiftInfo" class="alert alert-info">
+                                    Selecciona empleado y fecha para ver turno
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-check me-2"></i>Turno Destino
+                                </label>
+                                <div id="targetShiftInfo" class="alert alert-info">
+                                    Selecciona empleado y fecha para ver turno
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="exchangeReason" class="form-label">
+                            <i class="fas fa-comment me-2"></i>Motivo del Intercambio
+                        </label>
+                        <textarea class="form-control" id="exchangeReason" rows="3" placeholder="Explica el motivo del intercambio" required></textarea>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Ambos empleados deben estar disponibles para el intercambio</li>
+                            <li>Se verificarán las normativas laborales</li>
+                            <li>El intercambio se procesará automáticamente si es viable</li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info" onclick="requestExchange()">
+                    <i class="fas fa-exchange-alt me-2"></i>
+                    Solicitar Intercambio
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showExchangeModal() {
+    // Set default date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('exchangeDate').value = tomorrow.toISOString().split('T')[0];
+    
+    new bootstrap.Modal(document.getElementById('exchangeModal')).show();
+}
+
+function loadEmployeeShifts(type) {
+    const origin = document.getElementById('exchangeOrigin').value;
+    const target = document.getElementById('exchangeTarget').value;
+    const date = document.getElementById('exchangeDate').value;
+    
+    if (!date) return;
+    
+    if (type === 'origin' && origin) {
+        loadShiftInfo(origin, date, 'originShiftInfo');
+    }
+    
+    if (type === 'target' && target) {
+        loadShiftInfo(target, date, 'targetShiftInfo');
+    }
+    
+    if (type === undefined) {
+        if (origin) loadShiftInfo(origin, date, 'originShiftInfo');
+        if (target) loadShiftInfo(target, date, 'targetShiftInfo');
+    }
+}
+
+function loadShiftInfo(employee, date, elementId) {
+    const url = `/api/mostrar_planning?nombre=${encodeURIComponent(employee)}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const shifts = data.shifts.filter(shift => shift.date === date);
+                displayShiftInfo(shifts, elementId, employee);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading shift info:', error);
+        });
+}
+
+function displayShiftInfo(shifts, elementId, employee) {
+    const element = document.getElementById(elementId);
+    
+    if (shifts.length === 0) {
+        element.className = 'alert alert-warning';
+        element.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${employee} no tiene turno asignado para esta fecha`;
+        return;
+    }
+    
+    const shift = shifts[0];
+    element.className = 'alert alert-success';
+    element.innerHTML = `
+        <strong>${employee}</strong><br>
+        <i class="fas fa-clock me-1"></i>${shift.start_time} - ${shift.end_time}<br>
+        <i class="fas fa-user-tie me-1"></i>${shift.role}<br>
+        <span class="badge bg-success"><i class="fas fa-user-check me-1"></i>Asignado</span>
+    `;
+}
+
+function requestExchange() {
+    const origin = document.getElementById('exchangeOrigin').value;
+    const target = document.getElementById('exchangeTarget').value;
+    const date = document.getElementById('exchangeDate').value;
+    const reason = document.getElementById('exchangeReason').value;
+    
+    if (!origin || !target || !date || !reason) {
+        showAlert('danger', 'Por favor, completa todos los campos obligatorios');
+        return;
+    }
+    
+    if (origin === target) {
+        showAlert('danger', 'No puedes intercambiar con el mismo empleado');
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Procesando...';
+    button.disabled = true;
+    
+    fetch('/api/solicitar_intercambio', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            origen: origin,
+            destino: target,
+            fecha: date
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'Intercambio realizado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('exchangeModal')).hide();
+            // Reset form
+            document.getElementById('exchangeForm').reset();
+            // Reload statistics
+            loadStatistics();
+        } else {
+            showAlert('danger', 'Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'Error al procesar intercambio');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+</script>

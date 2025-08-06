@@ -1,0 +1,111 @@
+<!-- Generate Planning Modal -->
+<div class="modal fade" id="generatePlanningModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    Generar Planning Semanal
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="generatePlanningForm">
+                    <div class="mb-3">
+                        <label for="fechaInicio" class="form-label">
+                            <i class="fas fa-calendar-day me-2"></i>Fecha de Inicio
+                        </label>
+                        <input type="date" class="form-control" id="fechaInicio" required>
+                        <div class="form-text">Selecciona el lunes de la semana</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="fechaFin" class="form-label">
+                            <i class="fas fa-calendar-day me-2"></i>Fecha de Fin
+                        </label>
+                        <input type="date" class="form-control" id="fechaFin" required>
+                        <div class="form-text">Selecciona el domingo de la semana</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Información:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Se generarán turnos de 8 horas (mañana, tarde, noche)</li>
+                            <li>Los empleados se asignarán automáticamente por antigüedad</li>
+                            <li>Se respetarán las normativas laborales (descansos, horas máximas)</li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="generatePlanning()">
+                    <i class="fas fa-magic me-2"></i>
+                    Generar Planning
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showGeneratePlanningModal() {
+    // Set default dates (next Monday to Sunday)
+    const today = new Date();
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + (8 - today.getDay()) % 7);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    
+    document.getElementById('fechaInicio').value = monday.toISOString().split('T')[0];
+    document.getElementById('fechaFin').value = sunday.toISOString().split('T')[0];
+    
+    new bootstrap.Modal(document.getElementById('generatePlanningModal')).show();
+}
+
+function generatePlanning() {
+    const fechaInicio = document.getElementById('fechaInicio').value;
+    const fechaFin = document.getElementById('fechaFin').value;
+    
+    if (!fechaInicio || !fechaFin) {
+        alert('Por favor, selecciona ambas fechas');
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando...';
+    button.disabled = true;
+    
+    fetch('/api/generar_planning', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            fecha_inicio: fechaInicio,
+            fecha_fin: fechaFin
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'Planning generado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('generatePlanningModal')).hide();
+            // Reload statistics
+            loadStatistics();
+        } else {
+            showAlert('danger', 'Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'Error al generar planning');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+</script>

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio - Gestión de Turnos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 text-center">
+        <div class="hero-section">
+            <h1 class="display-4 fw-bold text-primary mb-4">
+                <i class="fas fa-calendar-alt me-3"></i>
+                Gestión Inteligente de Turnos
+            </h1>
+            <p class="lead mb-5">
+                Sistema automatizado para la planificación semanal de turnos laborales, 
+                considerando disponibilidad, antigüedad, preferencias y normativas legales.
+            </p>
+            
+            {% if current_user.is_authenticated %}
+            <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg px-4 me-sm-3">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Ir al Dashboard
+                </a>
+                <button class="btn btn-outline-primary btn-lg px-4" onclick="showPlanningModal()">
+                    <i class="fas fa-calendar me-2"></i>
+                    Ver Planning
+                </button>
+            </div>
+            {% else %}
+            <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-4 me-sm-3">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    Iniciar Sesión
+                </a>
+                <button class="btn btn-outline-primary btn-lg px-4" onclick="showDemoModal()">
+                    <i class="fas fa-play me-2"></i>
+                    Ver Demo
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mt-5 pt-5">
+    <div class="col-12">
+        <h2 class="text-center mb-5">Características Principales</h2>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-robot fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">Planificación Automática</h5>
+                <p class="card-text">
+                    Generación automática de turnos considerando antigüedad, 
+                    disponibilidad y normativas laborales.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-exchange-alt fa-3x text-success"></i>
+                </div>
+                <h5 class="card-title">Gestión de Ausencias</h5>
+                <p class="card-text">
+                    Registro de ausencias con búsqueda automática de reemplazos 
+                    y gestión de intercambios de turnos.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-chart-line fa-3x text-info"></i>
+                </div>
+                <h5 class="card-title">Estadísticas y Reportes</h5>
+                <p class="card-text">
+                    Métricas de carga laboral, cobertura de turnos y 
+                    exportación a CSV/PDF para análisis.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How it works -->
+<div class="row mt-5 pt-5">
+    <div class="col-12">
+        <h2 class="text-center mb-5">¿Cómo Funciona?</h2>
+    </div>
+    
+    <div class="col-md-3 text-center mb-4">
+        <div class="step-number mb-3">
+            <span class="badge bg-primary rounded-circle p-3">1</span>
+        </div>
+        <h5>Generar Planning</h5>
+        <p class="text-muted">Define el período semanal y el sistema crea automáticamente los turnos.</p>
+    </div>
+    
+    <div class="col-md-3 text-center mb-4">
+        <div class="step-number mb-3">
+            <span class="badge bg-primary rounded-circle p-3">2</span>
+        </div>
+        <h5>Asignar Empleados</h5>
+        <p class="text-muted">El sistema asigna empleados considerando antigüedad y disponibilidad.</p>
+    </div>
+    
+    <div class="col-md-3 text-center mb-4">
+        <div class="step-number mb-3">
+            <span class="badge bg-primary rounded-circle p-3">3</span>
+        </div>
+        <h5>Gestionar Cambios</h5>
+        <p class="text-muted">Registra ausencias y solicita intercambios de turnos cuando sea necesario.</p>
+    </div>
+    
+    <div class="col-md-3 text-center mb-4">
+        <div class="step-number mb-3">
+            <span class="badge bg-primary rounded-circle p-3">4</span>
+        </div>
+        <h5>Exportar Reportes</h5>
+        <p class="text-muted">Genera reportes en CSV o PDF para análisis y archivo.</p>
+    </div>
+</div>
+
+<!-- Demo Modal -->
+<div class="modal fade" id="demoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-play me-2"></i>
+                    Demo del Sistema
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Credenciales de Demo:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Email:</strong> juan@empresa.com</li>
+                            <li><strong>Password:</strong> password123</li>
+                        </ul>
+                        <p class="text-muted small">
+                            Puedes usar cualquiera de estos empleados para probar el sistema:
+                        </p>
+                        <ul class="small">
+                            <li>juan@empresa.com</li>
+                            <li>maria@empresa.com</li>
+                            <li>carlos@empresa.com</li>
+                            <li>ana@empresa.com</li>
+                            <li>luis@empresa.com</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Funcionalidades a Probar:</h6>
+                        <ul class="small">
+                            <li>Generar planning semanal</li>
+                            <li>Ver turnos asignados</li>
+                            <li>Registrar ausencias</li>
+                            <li>Solicitar intercambios</li>
+                            <li>Ver estadísticas</li>
+                            <li>Exportar reportes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="{{ url_for('login') }}" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    Ir a Login
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showDemoModal() {
+    new bootstrap.Modal(document.getElementById('demoModal')).show();
+}
+</script>
+{% endblock %}

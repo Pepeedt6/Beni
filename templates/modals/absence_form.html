@@ -1,0 +1,139 @@
+<!-- Absence Form Modal -->
+<div class="modal fade" id="absenceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-times me-2"></i>
+                    Registrar Ausencia
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="absenceForm">
+                    <div class="mb-3">
+                        <label for="absenceEmployee" class="form-label">
+                            <i class="fas fa-user me-2"></i>Empleado
+                        </label>
+                        <select class="form-select" id="absenceEmployee" required>
+                            <option value="">Selecciona un empleado</option>
+                            <option value="Juan Pérez">Juan Pérez</option>
+                            <option value="María García">María García</option>
+                            <option value="Carlos López">Carlos López</option>
+                            <option value="Ana Martínez">Ana Martínez</option>
+                            <option value="Luis Rodríguez">Luis Rodríguez</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="absenceDate" class="form-label">
+                            <i class="fas fa-calendar-day me-2"></i>Fecha de Ausencia
+                        </label>
+                        <input type="date" class="form-control" id="absenceDate" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="absenceReason" class="form-label">
+                            <i class="fas fa-comment me-2"></i>Motivo
+                        </label>
+                        <select class="form-select" id="absenceReason" required>
+                            <option value="">Selecciona un motivo</option>
+                            <option value="Enfermedad">Enfermedad</option>
+                            <option value="Vacaciones">Vacaciones</option>
+                            <option value="Asuntos personales">Asuntos personales</option>
+                            <option value="Formación">Formación</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="absenceDetails" class="form-label">
+                            <i class="fas fa-file-text me-2"></i>Detalles Adicionales
+                        </label>
+                        <textarea class="form-control" id="absenceDetails" rows="3" placeholder="Descripción adicional (opcional)"></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Información:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Se liberarán automáticamente los turnos del empleado</li>
+                            <li>El sistema buscará reemplazos disponibles</li>
+                            <li>Se considerará la antigüedad para asignar reemplazos</li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="registerAbsence()">
+                    <i class="fas fa-save me-2"></i>
+                    Registrar Ausencia
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showAbsenceModal() {
+    // Set default date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('absenceDate').value = tomorrow.toISOString().split('T')[0];
+    
+    new bootstrap.Modal(document.getElementById('absenceModal')).show();
+}
+
+function registerAbsence() {
+    const employee = document.getElementById('absenceEmployee').value;
+    const date = document.getElementById('absenceDate').value;
+    const reason = document.getElementById('absenceReason').value;
+    const details = document.getElementById('absenceDetails').value;
+    
+    if (!employee || !date || !reason) {
+        showAlert('danger', 'Por favor, completa todos los campos obligatorios');
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registrando...';
+    button.disabled = true;
+    
+    const motivo = details ? `${reason} - ${details}` : reason;
+    
+    fetch('/api/registrar_ausencia', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            nombre: employee,
+            fecha: date,
+            motivo: motivo
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'Ausencia registrada exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('absenceModal')).hide();
+            // Reset form
+            document.getElementById('absenceForm').reset();
+            // Reload statistics
+            loadStatistics();
+        } else {
+            showAlert('danger', 'Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'Error al registrar ausencia');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+</script>
